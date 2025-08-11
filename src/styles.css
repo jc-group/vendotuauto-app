@@ -1,2 +1,101 @@
-/* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
+
+/* Dark mode controlado por clase .dark */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --- Design tokens (v4.1) ---------------------------------------------- */
+@theme {
+  /* Breakpoints */
+  --breakpoint-2xl: 1200px;
+
+  /* Colores de marca */
+  --color-brand-50: #fef2f2;
+  --color-brand-100: #fee2e2;
+  --color-brand-200: #fecaca;
+  --color-brand-300: #fca5a5;
+  --color-brand-400: #f87171;
+  --color-brand-500: #ef4444;
+  --color-brand-600: #dc2626;
+  --color-brand-700: #b91c1c;
+  --color-brand-800: #991b1b;
+  --color-brand-900: #7f1d1d;
+  --color-brand-950: #450a0a;
+  --color-brand: var(--color-brand-500);
+  --color-brand-foreground: #ffffff;
+
+  /* Acentos y muted */
+  --color-accent: #45bba5;
+  --color-accent-foreground: #0b3b33;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #475569;
+
+  /* Tipografía, radios y sombras */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Arial, "Noto Sans", sans-serif;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.05),
+    0 8px 24px -12px rgb(0 0 0 / 0.1);
+}
+
+/* Mapear superficies semánticas que cambian por modo */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+}
+
+/* Claro (día) */
+:root {
+  --surface: #ffffff;
+  --surface-strong: #f8fafc; /* encabezados/paneles suaves */
+}
+
+/* Oscuro (noche) */
+.dark {
+  --surface: #0b1220;        /* base */
+  --surface-strong: #111827; /* paneles */
+}
+
+/* Fondo y color base del documento (opcional) */
+html, body { background: var(--color-surface); }
+
+/* --- Utilidades de UI (v4 @utility) ----------------------------------- */
+@utility container-safe {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  width: 100%;
+  max-width: 1200px; /* = 2xl */
+}
+
+@utility card {
+  @apply rounded-[var(--radius-2xl)] border border-slate-200 bg-surface p-6 shadow-[var(--shadow-soft)]
+         dark:border-slate-800;
+}
+
+@utility field {
+  @apply w-full rounded-xl border border-slate-300 bg-surface px-4 py-2 text-slate-900
+         placeholder-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand
+         dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500;
+}
+
+@utility btn {
+  @apply inline-flex items-center gap-2 rounded-[var(--radius-xl)] px-6 py-2 text-sm font-semibold
+         transition shadow-[var(--shadow-soft)] focus-visible:outline-none focus-visible:ring-2
+         focus-visible:ring-brand disabled:opacity-50 disabled:pointer-events-none;
+}
+
+@utility btn-primary {
+  @apply btn bg-brand text-[var(--color-brand-foreground)] border border-brand
+         hover:bg-brand-700 focus-visible:bg-brand-700
+         dark:bg-brand-600 dark:hover:bg-brand-500;
+}
+
+@utility btn-outline {
+  @apply btn border border-slate-300 bg-surface text-slate-700 hover:bg-slate-50
+         dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800;
+}
+
+@utility tag {
+  @apply inline-flex items-center rounded-full bg-[var(--color-muted)] px-3 py-1 text-xs
+         text-[var(--color-muted-foreground)];
+}
