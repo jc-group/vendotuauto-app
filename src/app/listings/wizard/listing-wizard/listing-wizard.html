@@ -1,0 +1,574 @@
+<div class="container-safe mx-auto p-4 md:p-6">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl md:text-3xl text-brand font-[var(--font-sans)]">
+      Crear publicación
+    </h1>
+    <div class="flex items-center gap-3">
+      <span class="hidden sm:inline-flex tag">Borrador</span>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <ol class="mb-8 flex items-center justify-center gap-x-8 text-xs sm:text-sm">
+    <li class="flex items-center">
+      <div
+        class="size-8 sm:size-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md"
+        [class.bg-brand]="step() >= 1"
+        [class.text-white]="step() >= 1"
+        [class.bg-slate-200]="step() < 1"
+        [class.text-slate-700]="step() < 1"
+      >
+        1
+      </div>
+      <span class="ml-3 sm:ml-4 font-medium">Datos</span>
+    </li>
+    <li class="flex items-center">
+      <div
+        class="h-1 w-32 max-w-[160px] mx-2 rounded-full bg-slate-200"
+        [class.bg-brand]="step() > 1"
+      ></div>
+    </li>
+    <li class="flex items-center">
+      <div
+        class="size-8 sm:size-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md"
+        [class.bg-brand]="step() >= 2"
+        [class.text-white]="step() >= 2"
+        [class.bg-slate-200]="step() < 2"
+        [class.text-slate-700]="step() < 2"
+      >
+        2
+      </div>
+      <span class="ml-3 sm:ml-4 font-medium">Precio</span>
+    </li>
+    <li class="flex items-center">
+      <div
+        class="h-1 w-32 max-w-[160px] mx-2 rounded-full bg-slate-200"
+        [class.bg-brand]="step() > 2"
+      ></div>
+    </li>
+    <li class="flex items-center">
+      <div
+        class="size-8 sm:size-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md"
+        [class.bg-brand]="step() >= 3"
+        [class.text-white]="step() >= 3"
+        [class.bg-slate-200]="step() < 3"
+        [class.text-slate-700]="step() < 3"
+      >
+        3
+      </div>
+      <span class="ml-3 sm:ml-4 font-medium">Fotos</span>
+    </li>
+  </ol>
+
+  <!-- Step 1 -->
+  @if (step() === 1) {
+  <form
+    [formGroup]="formVehicle"
+    (ngSubmit)="next()"
+    class="card md:p-8 space-y-8 font-[var(--font-sans)]"
+    aria-label="Datos del vehículo"
+    aria-describedby="vehicle-form-desc"
+  >
+    <h2 id="vehicle-form-desc" class="text-xl mb-2 text-brand">
+      Título de la publicación
+    </h2>
+    <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div>
+        <label for="title" class="block text-sm font-medium mb-2">
+          Título <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="title"
+          formControlName="title"
+          type="text"
+          class="field"
+          placeholder="Ejemplo: Nissan Versa Advance 2018"
+          aria-required="true"
+          [attr.aria-invalid]="formVehicle.controls.title.invalid || null"
+        />
+        @if (formVehicle.controls.title.invalid &&
+        formVehicle.controls.title.touched) {
+        <p class="mt-1 text-xs text-red-600">Requerido.</p>
+        }
+      </div>
+    </div>
+    <hr class="my-6" />
+    <h3 class="text-lg font-semibold mb-2 text-brand">Datos del vehículo</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div class="relative">
+        <label for="brand" class="block text-sm font-medium mb-2">
+          Marca <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        @if (brands.length) {
+        <select
+          id="brand-suggestions"
+          class="mt-2 w-full field"
+          formControlName="brand"
+          title="Selecciona la marca del vehículo"
+        >
+          <option value="">Selecciona una marca</option>
+          @for (brand of brands; track $index) {
+          <option [value]="brand">{{ brand }}</option>
+          }
+        </select>
+        } @else {
+        <input
+          id="brand"
+          formControlName="brand"
+          type="text"
+          class="field"
+          aria-required="true"
+          autocomplete="off"
+          aria-autocomplete="list"
+          aria-controls="brand-suggestions"
+        />
+        } @if (brandLoading) {
+        <p class="mt-1 text-xs text-slate-400">Cargando marcas...</p>
+        } @if (formVehicle.controls.brand.invalid &&
+        formVehicle.controls.brand.touched) {
+        <p class="mt-1 text-xs text-red-600">Requerido.</p>
+        }
+      </div>
+
+      <div class="relative">
+        <label for="model" class="block text-sm font-medium mb-2">
+          Modelo <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        @if (formVehicle.value.brand && models.length) {
+        <select
+          id="model-suggestions"
+          class="mt-2 w-full field"
+          formControlName="model"
+          title="Selecciona el modelo del vehículo"
+        >
+          <option value="">Selecciona un modelo</option>
+          @for (model of models; track $index) {
+          <option [value]="model">{{ model }}</option>
+          }
+        </select>
+        } @else {
+        <input
+          id="model"
+          formControlName="model"
+          type="text"
+          class="field"
+          aria-required="true"
+          autocomplete="off"
+          (input)="onModelInput($event)"
+          aria-autocomplete="list"
+          aria-controls="model-suggestions"
+        />
+        @if (modelSuggestions.length) {
+        <ul
+          id="model-suggestions"
+          class="absolute left-0 right-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-auto z-10"
+        >
+          @for (suggestion of modelSuggestions; track $index) {
+          <li>
+            <button
+              type="button"
+              class="block w-full text-left px-4 py-2 hover:bg-slate-100 focus:bg-brand-100 focus:outline-none"
+              (click)="selectModel(suggestion)"
+            >
+              {{ suggestion }}
+            </button>
+          </li>
+          }
+        </ul>
+        } } @if (formVehicle.controls.model.invalid &&
+        formVehicle.controls.model.touched) {
+        <p class="mt-1 text-xs text-red-600">Requerido.</p>
+        }
+      </div>
+
+      <div>
+        <label for="year" class="block text-sm font-medium mb-2">
+          Año <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="year"
+          formControlName="year"
+          type="number"
+          min="1990"
+          [attr.max]="nextYear"
+          class="field"
+          aria-required="true"
+        />
+        @if (formVehicle.controls.year.invalid &&
+        formVehicle.controls.year.touched) {
+        <p class="mt-1 text-xs text-red-600">
+          Año entre 1990 y {{ nextYear }}.
+        </p>
+        }
+      </div>
+
+      <div>
+        <label for="km" class="block text-sm font-medium mb-2">
+          Kilometraje <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="km"
+          formControlName="km"
+          type="number"
+          min="0"
+          class="field"
+          aria-required="true"
+        />
+        @if (formVehicle.controls.km.invalid && formVehicle.controls.km.touched)
+        {
+        <p class="mt-1 text-xs text-red-600">Debe ser 0 o mayor.</p>
+        }
+      </div>
+
+      <div>
+        <label for="trim" class="block text-sm font-medium mb-2">
+          Versión <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="trim"
+          formControlName="trim"
+          type="text"
+          class="field"
+          placeholder="Ejemplo: Advance, Sense, GLI, etc."
+          aria-required="true"
+        />
+        @if (formVehicle.controls.trim.invalid &&
+        formVehicle.controls.trim.touched) {
+        <p class="mt-1 text-xs text-red-600">Requerido.</p>
+        }
+      </div>
+
+      <div class="sm:col-span-2">
+        <label for="description" class="block text-sm font-medium mb-2"
+          >Descripción</label
+        >
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="4"
+          class="field"
+          placeholder="Descripción"
+        ></textarea>
+      </div>
+    </div>
+    <hr class="my-6" />
+    <h3 class="text-lg font-semibold mb-2 text-brand">Ubicación de venta</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div>
+        <label for="state" class="block text-sm font-medium mb-2">
+          Estado <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        <select
+          id="state"
+          formControlName="state"
+          class="field"
+          (change)="onStateChange($event)"
+        >
+          <option value="">Selecciona un estado</option>
+          @for (state of states; track $index) {
+          <option [value]="state.state">{{ state.state }}</option>
+          }
+        </select>
+        @if (formVehicle.controls.state.invalid &&
+        formVehicle.controls.state.touched) {
+        <p class="mt-1 text-xs text-red-600">Requerido.</p>
+        }
+      </div>
+      <div>
+        <label for="municipality" class="block text-sm font-medium mb-2">
+          Municipio <span class="text-slate-400" aria-hidden="true">*</span>
+        </label>
+        <select
+          id="municipality"
+          formControlName="municipality"
+          class="field"
+          [disabled]="!municipalities.length"
+        >
+          <option value="">Selecciona un municipio</option>
+          @for (mun of municipalities; track $index) {
+          <option [value]="mun">{{ mun }}</option>
+          }
+        </select>
+        @if (formVehicle.controls.municipality.invalid &&
+        formVehicle.controls.municipality.touched) {
+        <p class="mt-1 text-xs text-red-600">Requerido.</p>
+        }
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 sm:justify-end pt-4">
+      <button type="button" class="btn-outline">Cancelar</button>
+      <button type="button" class="btn-outline" (click)="saveDraft()">
+        Guardar borrador
+      </button>
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="formVehicle.invalid"
+      >
+        Continuar
+      </button>
+    </div>
+  </form>
+  }
+
+  <!-- Step 2 -->
+  @if (step() === 2) {
+  <form
+    [formGroup]="formPrice"
+    (ngSubmit)="next()"
+    class="card md:p-8 space-y-8 font-[var(--font-sans)]"
+    aria-label="Precio y versión"
+    aria-describedby="price-form-desc"
+  >
+    <h2 id="price-form-desc" class="text-xl mb-2 text-brand">
+      Precio y versión
+    </h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div>
+        <label for="priceMin" class="block text-sm font-medium mb-2">
+          Precio mínimo (MXN)
+        </label>
+        <input
+          id="priceMin"
+          formControlName="priceMin"
+          type="number"
+          min="10000"
+          step="500"
+          class="field"
+          aria-required="true"
+        />
+        @if (formPrice.controls.priceMin.invalid &&
+        formPrice.controls.priceMin.touched) {
+        <p class="mt-1 text-xs text-red-600">Mínimo $10,000 MXN.</p>
+        }
+      </div>
+      <div>
+        <label for="priceMax" class="block text-sm font-medium mb-2">
+          Precio máximo (MXN)
+        </label>
+        <input
+          id="priceMax"
+          formControlName="priceMax"
+          type="number"
+          min="10000"
+          step="500"
+          class="field"
+          aria-required="true"
+        />
+        @if (formPrice.controls.priceMax.invalid &&
+        formPrice.controls.priceMax.touched) {
+        <p class="mt-1 text-xs text-red-600">Mínimo $10,000 MXN.</p>
+        }
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-slate-500">
+      Establecer un rango de precios te ayudará a aparecer en búsquedas
+      filtradas por precio. Los usuarios podrán encontrar tu publicación más
+      fácilmente si buscan autos dentro de este rango. Te recomendamos que el
+      rango sea realista y competitivo para atraer más interesados. El precio
+      máximo será el que se muestre en las publicaciones.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-3 sm:justify-between pt-2">
+      <button type="button" class="btn-outline" (click)="prev()">Atrás</button>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" class="btn-outline" (click)="saveDraft()">
+          Guardar borrador
+        </button>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="formPrice.invalid"
+        >
+          Continuar
+        </button>
+      </div>
+    </div>
+  </form>
+  }
+
+  <!-- Step 3 (Photos) -->
+  @if (step() === 3) {
+  <div
+    class="card md:p-8 space-y-6 font-[var(--font-sans)]"
+    aria-label="Fotos"
+    aria-describedby="photos-form-desc"
+  >
+    <h2 id="photos-form-desc" class="text-xl text-brand">Fotos</h2>
+
+    <span class="block text-sm font-medium"
+      >Fotos <span class="text-slate-400" aria-hidden="true">*</span></span
+    >
+
+    @if (errors().length) {
+    <ul
+      class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+    >
+      @for (e of errors(); track $index) {
+      <li>• {{ e }}</li>
+      }
+    </ul>
+    }
+
+    <!-- Dropzone -->
+    <div
+      class="border border-dashed border-slate-300 rounded-2xl p-6 text-center"
+      (dragover)="$event.preventDefault()"
+      (drop)="onDrop($event)"
+    >
+      <p>Arrastra y suelta aquí o</p>
+      <label class="mt-2 inline-flex cursor-pointer btn-outline" tabindex="0">
+        <input
+          type="file"
+          class="hidden"
+          multiple
+          accept="image/jpeg,image/png,image/webp"
+          (change)="onFile($event)"
+        />
+        Seleccionar archivos
+      </label>
+      <p class="mt-2 text-xs text-slate-500">
+        Hasta 10 fotos • JPG/PNG/WebP • Máx 5 MB c/u
+      </p>
+    </div>
+
+    <!-- Previews -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      @for (p of photos(); track $index) {
+      <div class="group relative">
+        <img
+          [src]="previewFor($index)"
+          alt="Vista previa"
+          class="aspect-square w-full rounded-xl object-cover border border-slate-200"
+        />
+        <div
+          class="absolute right-2 top-2 flex gap-2 opacity-0 transition group-hover:opacity-100"
+        >
+          <button
+            type="button"
+            class="btn-outline px-2 py-1"
+            (click)="move($index, -1)"
+            [disabled]="$index === 0"
+            title="Mover a la izquierda"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            class="btn-outline px-2 py-1"
+            (click)="move($index, 1)"
+            [disabled]="$index === photos().length - 1"
+            title="Mover a la derecha"
+          >
+            ▶
+          </button>
+          <button
+            type="button"
+            class="btn-outline px-2 py-1"
+            (click)="remove($index)"
+            title="Quitar"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 sm:justify-between pt-2">
+      <button type="button" class="btn-outline" (click)="prev()">Atrás</button>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button type="button" class="btn-outline" (click)="saveDraft()">
+          Guardar borrador
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="!canSubmit()"
+          (click)="submit()"
+        >
+          Enviar a revisión
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card -->
+  @if (photos().length) {
+  <div
+    class="max-w-xs mx-auto bg-white border border-slate-200 rounded-2xl shadow overflow-hidden mt-10"
+    role="region"
+    aria-label="Vista previa de publicación"
+  >
+    <h3 class="text-lg font-semibold text-brand px-4 pt-4 pb-2">
+      Vista previa
+    </h3>
+    <div class="relative">
+      <img
+        [src]="previewFor(0)"
+        alt="Foto principal del vehículo"
+        class="w-full h-48 object-cover"
+      />
+      <button
+        type="button"
+        class="absolute top-3 right-3 bg-white/80 rounded-full p-2 shadow hover:bg-white focus:outline-none focus:ring-2 focus:ring-brand"
+        [attr.aria-label]="
+          isFavorited ? 'Quitar de favoritos' : 'Agregar a favoritos'
+        "
+        [class.favorited]="isFavorited"
+        (click)="toggleFavorite()"
+        title="{{
+          isFavorited ? 'Quitar de favoritos' : 'Agregar a favoritos'
+        }}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          [attr.fill]="isFavorited ? '#ef4444' : 'none'"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-6 text-slate-500"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+          />
+        </svg>
+        <span class="sr-only">{{
+          isFavorited ? "Quitar de favoritos" : "Agregar a favoritos"
+        }}</span>
+      </button>
+    </div>
+    <div class="p-4">
+      <div class="font-bold text-lg text-brand mb-1">
+        {{ formVehicle.value.brand }} • {{ formVehicle.value.model }}
+      </div>
+      <div class="text-sm text-slate-700 mb-2">
+        {{ formVehicle.value.year }} •
+        {{ formVehicle.value.km | number : "1.0-0" }} km •
+        {{ formVehicle.value.trim }}
+      </div>
+      <div class="border-t border-slate-100 pt-2 mb-2">
+        <span class="block text-xs text-slate-500">Precio (MXN) 🇲🇽</span>
+        <span class="block text-2xl font-bold text-green-700">
+          ${{ formPrice.value.priceMax | number : "1.0-0" }}
+        </span>
+      </div>
+      <div
+        class="flex items-center gap-2 text-xs text-slate-600 border-t border-slate-100 pt-2"
+      >
+        <span
+          >En {{ formVehicle.value.state?.trim() }},
+          {{ formVehicle.value.municipality | uppercase }}</span
+        >
+      </div>
+    </div>
+  </div>
+  } }
+</div>
