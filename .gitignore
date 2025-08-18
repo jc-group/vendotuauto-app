@@ -37,6 +37,9 @@ yarn-error.log
 testem.log
 /typings
 
+# Angular environments (no subir claves)
+src/environments/*.ts
+
 # System files
 .DS_Store
 Thumbs.db
