@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StateData, StatesService } from '../../../shared/states.service';
+import { SupabaseService } from '../../../shared/supabase.service';
 import { VehicleApiService } from '../../../shared/vehicle-api.service';
 
 interface ListingDraft {
@@ -202,20 +203,41 @@ export class ListingWizard implements OnDestroy, OnInit {
   // --- Submit (stub)
   async submit() {
     if (!this.canSubmit()) return;
-    // TODO: integrate Supabase: createDraft(), uploadPhotos(), submitForReview()
-    console.log('Submitting payload:', {
-      vehicle: this.formVehicle.value,
-      price: this.formPrice.value,
-      photosCount: this._photos().length,
-    });
-    alert(
-      '¡Enviado a revisión! (stub)\nConectaremos con Supabase en el siguiente paso.'
-    );
+    try {
+      // Construir el draft con los campos requeridos
+      const draft = {
+        title: this.formVehicle.value.title ?? '',
+        brand: this.formVehicle.value.brand ?? '',
+        model: this.formVehicle.value.model ?? '',
+        year: Number(this.formVehicle.value.year) || 0,
+        price: Number(this.formPrice.value.priceMax) || 0,
+        status: 'pending',
+        state: this.formVehicle.value.state ?? '',
+        municipality: this.formVehicle.value.municipality ?? '',
+        km: Number(this.formVehicle.value.km) || 0,
+        description: this.formVehicle.value.description ?? '',
+        trim: this.formVehicle.value.trim ?? '',
+        priceMin: Number(this.formPrice.value.priceMin) || 0,
+        priceMax: Number(this.formPrice.value.priceMax) || 0,
+      };
+      await this.supabaseService.createListing(draft);
+      // Subir fotos y guardar URLs
+      const photoUrls: string[] = [];
+      for (const file of this._photos()) {
+        const url = await this.supabaseService.uploadPhoto(file);
+        photoUrls.push(url);
+      }
+      alert('¡Enviado a revisión!');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert('Error al enviar: ' + msg);
+    }
   }
 
   // --- Model suggestions
   private vehicleApi = inject(VehicleApiService);
   private statesService = inject(StatesService);
+  private supabaseService = inject(SupabaseService);
   modelSuggestions: string[] = [];
 
   onModelInput(event: Event) {
@@ -276,6 +298,18 @@ export class ListingWizard implements OnDestroy, OnInit {
       }
     });
     this.states = this.statesService.getStates();
+    this.formVehicle.controls.municipality.disable();
+    this.formVehicle.controls.state.valueChanges.subscribe((state) => {
+      this.municipalities = state
+        ? this.statesService.getMunicipalitiesByState(state)
+        : [];
+      this.formVehicle.patchValue({ municipality: '' });
+      if (this.municipalities.length) {
+        this.formVehicle.controls.municipality.enable();
+      } else {
+        this.formVehicle.controls.municipality.disable();
+      }
+    });
   }
 
   loadModels(brand: string | null) {
