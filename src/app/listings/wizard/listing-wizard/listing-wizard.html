@@ -72,7 +72,8 @@
           Marca <span class="text-slate-400" aria-hidden="true">*</span>
         </label>
         @if (brands.length) {
-        <select id="brand" class="mt-2 w-full field" formControlName="brand" title="Selecciona la marca del vehículo">
+        <select id="brand" class="mt-2 w-full field" formControlName="brand"
+          title="Selecciona la marca del vehículo">
           <option value="">Selecciona una marca</option>
           @for (brand of brands; track $index) {
           <option [value]="brand">{{ brand }}</option>
@@ -94,7 +95,8 @@
           Modelo <span class="text-slate-400" aria-hidden="true">*</span>
         </label>
         @if (formVehicle.value.brand && models.length) {
-        <select id="model" class="mt-2 w-full field" formControlName="model" title="Selecciona el modelo del vehículo">
+        <select id="model" class="mt-2 w-full field" formControlName="model"
+          title="Selecciona el modelo del vehículo">
           <option value="">Selecciona un modelo</option>
           @for (model of models; track $index) {
           <option [value]="model">{{ model }}</option>
@@ -175,7 +177,7 @@
         <select id="state" formControlName="state" class="field" (change)="onStateChange($event)">
           <option value="">Selecciona un estado</option>
           @for (state of states; track $index) {
-          <option [value]="state.state">{{ state.state }}</option>
+          <option [value]="state.id">{{ state.name }}</option>
           }
         </select>
         @if (formVehicle.controls.state.invalid &&
@@ -190,7 +192,7 @@
         <select id="municipality" formControlName="municipality" class="field" title="Selecciona un municipio">
           <option value="">Selecciona un municipio</option>
           @for (mun of municipalities; track $index) {
-          <option [value]="mun">{{ mun }}</option>
+          <option [value]="mun.id">{{ mun.name }}</option>
           }
         </select>
         @if (formVehicle.controls.municipality.invalid &&

@@ -8,14 +8,18 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { StateData, StatesService } from '../../../shared/states.service';
+import {
+  LocationService,
+  Municipality,
+  State,
+} from '../../../shared/location.service';
 import { SupabaseService } from '../../../shared/supabase.service';
 import { VehicleApiService } from '../../../shared/vehicle-api.service';
 
 interface ListingDraft {
   title: string;
   state: string;
-  municipality: string;
+  municipality_name: string;
   brand: string;
   model: string;
   year: number | null;
@@ -99,7 +103,7 @@ export class ListingWizard implements OnDestroy, OnInit {
     const payload: ListingDraft = {
       title: this.formVehicle.value.title ?? '',
       state: this.formVehicle.value.state ?? '',
-      municipality: this.formVehicle.value.municipality ?? '',
+      municipality_name: this.formVehicle.value.municipality ?? '',
       brand: this.formVehicle.value.brand ?? '',
       model: this.formVehicle.value.model ?? '',
       year: this.formVehicle.value.year ?? null,
@@ -213,7 +217,7 @@ export class ListingWizard implements OnDestroy, OnInit {
         price: Number(this.formPrice.value.priceMax) || 0,
         status: 'pending',
         state: this.formVehicle.value.state ?? '',
-        municipality: this.formVehicle.value.municipality ?? '',
+        municipality_name: this.formVehicle.value.municipality ?? '',
         km: Number(this.formVehicle.value.km) || 0,
         description: this.formVehicle.value.description ?? '',
         trim: this.formVehicle.value.trim ?? '',
@@ -236,7 +240,7 @@ export class ListingWizard implements OnDestroy, OnInit {
 
   // --- Model suggestions
   private vehicleApi = inject(VehicleApiService);
-  private statesService = inject(StatesService);
+  private locationService = inject(LocationService);
   private supabaseService = inject(SupabaseService);
   modelSuggestions: string[] = [];
 
@@ -259,11 +263,11 @@ export class ListingWizard implements OnDestroy, OnInit {
   brands: string[] = [];
   brandLoading = true;
   models: string[] = [];
-  states: StateData[] = [];
-  municipalities: string[] = [];
+  states: State[] = [];
+  municipalities: Municipality[] = [];
 
   constructor() {
-    this.statesService = inject(StatesService);
+    this.locationService = inject(LocationService);
   }
 
   ngOnInit() {
@@ -297,18 +301,39 @@ export class ListingWizard implements OnDestroy, OnInit {
         this.formVehicle.controls.model.disable();
       }
     });
-    this.states = this.statesService.getStates();
+
+    // Cargar estados usando LocationService
+    this.locationService.getStates().subscribe({
+      next: (states) => {
+        this.states = states;
+      },
+      error: (err) => {
+        console.error('Error loading states:', err);
+      },
+    });
+    // Deshabilitar municipio al inicio
     this.formVehicle.controls.municipality.disable();
-    this.formVehicle.controls.state.valueChanges.subscribe((state) => {
-      this.municipalities = state
-        ? this.statesService.getMunicipalitiesByState(state)
-        : [];
-      this.formVehicle.patchValue({ municipality: '' });
-      if (this.municipalities.length) {
-        this.formVehicle.controls.municipality.enable();
+    // Suscribirse a cambios de estado para cargar municipios
+    this.formVehicle.controls.state.valueChanges.subscribe((stateId) => {
+      if (stateId) {
+        this.locationService
+          .getMunicipalitiesByStateId(Number(stateId))
+          .subscribe({
+            next: (municipalities) => {
+              this.municipalities = municipalities;
+              this.formVehicle.controls.municipality.enable();
+            },
+            error: (err) => {
+              console.error('Error loading municipalities:', err);
+              this.municipalities = [];
+              this.formVehicle.controls.municipality.disable();
+            },
+          });
       } else {
+        this.municipalities = [];
         this.formVehicle.controls.municipality.disable();
       }
+      this.formVehicle.patchValue({ municipality: '' });
     });
   }
 
@@ -323,10 +348,22 @@ export class ListingWizard implements OnDestroy, OnInit {
   }
 
   onStateChange(event: Event) {
-    const selectedState = (event.target as HTMLSelectElement).value;
-    this.municipalities = selectedState
-      ? this.statesService.getMunicipalitiesByState(selectedState)
-      : [];
+    const selectedStateId = (event.target as HTMLSelectElement).value;
+    if (selectedStateId) {
+      this.locationService
+        .getMunicipalitiesByStateId(Number(selectedStateId))
+        .subscribe({
+          next: (municipalities) => {
+            this.municipalities = municipalities;
+          },
+          error: (err) => {
+            console.error('Error loading municipalities:', err);
+            this.municipalities = [];
+          },
+        });
+    } else {
+      this.municipalities = [];
+    }
     this.formVehicle.patchValue({ municipality: '' });
   }
 

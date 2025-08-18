@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '@environments/environment';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export interface ListingDraft {
   title: string;
@@ -9,6 +9,8 @@ export interface ListingDraft {
   year: number;
   price: number;
   status?: string;
+  description?: string | null;
+  municipality_name?: string | null;
   [key: string]: unknown;
 }
 
@@ -47,7 +49,10 @@ export class SupabaseService {
   }
 
   /** Actualiza el estado de un registro */
-  async updateListingStatus(id: string, status: string): Promise<ListingDraft[]> {
+  async updateListingStatus(
+    id: string,
+    status: string
+  ): Promise<ListingDraft[]> {
     this.initClient();
     const { error, data } = await this.supabase!.from('listings')
       .update({ status })
