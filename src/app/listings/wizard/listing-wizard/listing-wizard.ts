@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { z } from 'zod';
 import {
   LocationService,
   Municipality,
@@ -15,6 +16,7 @@ import {
 } from '../../../shared/location.service';
 import { SupabaseService } from '../../../shared/supabase.service';
 import { VehicleApiService } from '../../../shared/vehicle-api.service';
+import { ToastService } from '../../../shared/toast.service';
 
 interface ListingDraft {
   title: string;
@@ -114,7 +116,7 @@ export class ListingWizard implements OnDestroy, OnInit {
       priceMax: this.formPrice.value.priceMax ?? null,
     };
     localStorage.setItem('listingDraft', JSON.stringify(payload));
-    alert('Draft saved locally.');
+    this.toast.success('Borrador guardado.');
   }
 
   // --- Files handlers
@@ -152,7 +154,14 @@ export class ListingWizard implements OnDestroy, OnInit {
       this.makePreview(current.length - 1, f);
     }
     this._photos.set([...current]);
-    if (errs.length) this.errors.set(errs);
+    if (errs.length) {
+      this.errors.set(errs);
+      this.toast.error(
+        errs.length === 1
+          ? errs[0]
+          : `${errs.length} archivos con errores. Revisa los detalles.`
+      );
+    }
   }
   remove(index: number) {
     const arr = [...this._photos()];
@@ -208,33 +217,65 @@ export class ListingWizard implements OnDestroy, OnInit {
   async submit() {
     if (!this.canSubmit()) return;
     try {
-      // Construir el draft con los campos requeridos
-      const draft = {
+      // 1) Construir input crudo desde formularios
+      const municipalityId = Number(this.formVehicle.value.municipality);
+      const municipality_name = this.municipalities.find(
+        (m) => m.id === municipalityId
+      )?.name ?? '';
+
+      const raw = {
         title: this.formVehicle.value.title ?? '',
         brand: this.formVehicle.value.brand ?? '',
         model: this.formVehicle.value.model ?? '',
-        year: Number(this.formVehicle.value.year) || 0,
-        price: Number(this.formPrice.value.priceMax) || 0,
-        status: 'pending',
-        state: this.formVehicle.value.state ?? '',
-        municipality_name: this.formVehicle.value.municipality ?? '',
-        km: Number(this.formVehicle.value.km) || 0,
-        description: this.formVehicle.value.description ?? '',
-        trim: this.formVehicle.value.trim ?? '',
-        priceMin: Number(this.formPrice.value.priceMin) || 0,
-        priceMax: Number(this.formPrice.value.priceMax) || 0,
+        year: this.formVehicle.value.year as unknown,
+        price: this.formPrice.value.priceMax as unknown,
+        status: 'pending' as const,
+        description: this.formVehicle.value.description ?? undefined,
+        municipality_name,
       };
-      await this.supabaseService.createListing(draft);
+
+      // 2) Validar y sanear con Zod (trim + rangos)
+      const SubmissionSchema = z.object({
+        title: z.string().trim().min(1, 'Título requerido'),
+        brand: z.string().trim().min(1, 'Marca requerida'),
+        model: z.string().trim().min(1, 'Modelo requerido'),
+        year: z.coerce
+          .number({ message: 'Año inválido' })
+          .int('Año debe ser entero')
+          .min(1990, 'Año mínimo 1990')
+          .max(2030, 'Año máximo 2030'),
+        price: z.coerce
+          .number({ message: 'Precio inválido' })
+          .min(10000, 'Precio mínimo $10,000'),
+        status: z.enum(['pending', 'published', 'rejected']).optional(),
+        description: z.string().trim().optional().nullable(),
+        municipality_name: z
+          .string()
+          .trim()
+          .min(1, 'Municipio requerido'),
+      });
+
+      const payload = SubmissionSchema.parse(raw);
+
+      // 3) Enviar a Supabase solo el shape esperado por la tabla
+      await this.supabaseService.createListing(payload);
       // Subir fotos y guardar URLs
       const photoUrls: string[] = [];
       for (const file of this._photos()) {
         const url = await this.supabaseService.uploadPhoto(file);
         photoUrls.push(url);
       }
-      alert('¡Enviado a revisión!');
+      this.toast.success('¡Enviado a revisión!');
     } catch (err) {
+      // Mostrar errores de validación Zod de forma amigable
+      if (err && typeof err === 'object' && 'issues' in (err as any)) {
+        const zodErr = err as z.ZodError;
+        this.errors.set(zodErr.issues.map((i) => i.message));
+        this.toast.error('Corrige los campos marcados y vuelve a intentar.');
+        return;
+      }
       const msg = err instanceof Error ? err.message : String(err);
-      alert('Error al enviar: ' + msg);
+      this.toast.error('Error al enviar: ' + msg);
     }
   }
 
@@ -242,6 +283,7 @@ export class ListingWizard implements OnDestroy, OnInit {
   private vehicleApi = inject(VehicleApiService);
   private locationService = inject(LocationService);
   private supabaseService = inject(SupabaseService);
+  private toast = inject(ToastService);
   modelSuggestions: string[] = [];
 
   onModelInput(event: Event) {
@@ -283,6 +325,7 @@ export class ListingWizard implements OnDestroy, OnInit {
       error: (err) => {
         console.error('Error loading brands:', err);
         this.brandLoading = false;
+        this.toast.error('Error cargando marcas. Intenta de nuevo.');
       },
     });
     // Cargar modelos si ya hay marca seleccionada al iniciar
@@ -309,6 +352,7 @@ export class ListingWizard implements OnDestroy, OnInit {
       },
       error: (err) => {
         console.error('Error loading states:', err);
+        this.toast.error('Error cargando estados.');
       },
     });
     // Deshabilitar municipio al inicio
@@ -327,6 +371,7 @@ export class ListingWizard implements OnDestroy, OnInit {
               console.error('Error loading municipalities:', err);
               this.municipalities = [];
               this.formVehicle.controls.municipality.disable();
+              this.toast.error('Error cargando municipios.');
             },
           });
       } else {
@@ -342,8 +387,15 @@ export class ListingWizard implements OnDestroy, OnInit {
       this.models = [];
       return;
     }
-    this.vehicleApi.getModelsForMake(brand).subscribe((models) => {
-      this.models = models;
+    this.vehicleApi.getModelsForMake(brand).subscribe({
+      next: (models) => {
+        this.models = models;
+      },
+      error: (err) => {
+        console.error('Error loading models:', err);
+        this.models = [];
+        this.toast.error('Error cargando modelos.');
+      },
     });
   }
 
@@ -359,6 +411,7 @@ export class ListingWizard implements OnDestroy, OnInit {
           error: (err) => {
             console.error('Error loading municipalities:', err);
             this.municipalities = [];
+            this.toast.error('Error cargando municipios.');
           },
         });
     } else {

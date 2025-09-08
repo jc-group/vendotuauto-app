@@ -72,8 +72,7 @@
           Marca <span class="text-slate-400" aria-hidden="true">*</span>
         </label>
         @if (brands.length) {
-        <select id="brand" class="mt-2 w-full field" formControlName="brand"
-          title="Selecciona la marca del vehículo">
+        <select id="brand" class="mt-2 w-full field" formControlName="brand" title="Selecciona la marca del vehículo">
           <option value="">Selecciona una marca</option>
           @for (brand of brands; track $index) {
           <option [value]="brand">{{ brand }}</option>
@@ -95,8 +94,7 @@
           Modelo <span class="text-slate-400" aria-hidden="true">*</span>
         </label>
         @if (formVehicle.value.brand && models.length) {
-        <select id="model" class="mt-2 w-full field" formControlName="model"
-          title="Selecciona el modelo del vehículo">
+        <select id="model" class="mt-2 w-full field" formControlName="model" title="Selecciona el modelo del vehículo">
           <option value="">Selecciona un modelo</option>
           @for (model of models; track $index) {
           <option [value]="model">{{ model }}</option>
@@ -217,26 +215,15 @@
   <!-- Step 2 -->
   @if (step() === 2) {
   <form [formGroup]="formPrice" (ngSubmit)="next()" class="card md:p-8 space-y-8 font-[var(--font-sans)]"
-    aria-label="Precio y versión" aria-describedby="price-form-desc">
+    aria-label="Precio" aria-describedby="price-form-desc">
     <h2 id="price-form-desc" class="text-xl mb-2 text-brand">
-      Precio y versión
+      Precio
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <div>
-        <label for="priceMin" class="block text-sm font-medium mb-2">
-          Precio mínimo (MXN)
-        </label>
-        <input id="priceMin" formControlName="priceMin" type="number" min="10000" step="500" class="field"
-          aria-required="true" />
-        @if (formPrice.controls.priceMin.invalid &&
-        formPrice.controls.priceMin.touched) {
-        <p class="mt-1 text-xs text-red-600">Mínimo $10,000 MXN.</p>
-        }
-      </div>
-      <div>
+      <div class="sm:col-span-2">
         <label for="priceMax" class="block text-sm font-medium mb-2">
-          Precio máximo (MXN)
+          Precio (MXN)
         </label>
         <input id="priceMax" formControlName="priceMax" type="number" min="10000" step="500" class="field"
           aria-required="true" />
@@ -247,11 +234,8 @@
       </div>
     </div>
     <p class="mt-2 text-xs text-slate-500">
-      Establecer un rango de precios te ayudará a aparecer en búsquedas
-      filtradas por precio. Los usuarios podrán encontrar tu publicación más
-      fácilmente si buscan autos dentro de este rango. Te recomendamos que el
-      rango sea realista y competitivo para atraer más interesados. El precio
-      máximo será el que se muestre en las publicaciones.
+      El precio será el que se muestre en las publicaciones. Te recomendamos que sea realista y competitivo para atraer
+      más interesados.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-3 sm:justify-between pt-2">
