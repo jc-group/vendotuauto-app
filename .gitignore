@@ -37,8 +37,9 @@ yarn-error.log
 testem.log
 /typings
 
-# Angular environments (no subir claves)
-src/environments/*.ts
+# Angular environments
+# We commit non-secret environment files so CI/CD (e.g., Vercel) can build.
+# Ensure sensitive values are not stored here; use public/anon keys only.
 
 # System files
 .DS_Store
